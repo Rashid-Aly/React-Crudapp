@@ -27,7 +27,6 @@ function UserForm({ editingUser, onSubmit, onCancel, initialData = {} }) {
 
   return (
     <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-      <input type="text" />
       <div className="bg-white rounded-lg p-6 shadow-lg max-w-lg w-full">
         <h2 className="text-xl font-semibold mb-4">
           {editingUser ? 'Edit User' : 'Add User'}
