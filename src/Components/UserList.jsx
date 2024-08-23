@@ -1,26 +1,27 @@
-// UserList.js
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import UserForm from "./UserForm";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import UserForm from './UserForm';
 
 function UserList({ refresh }) {
   const [users, setUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchUsers();
   }, [refresh]);
 
   const fetchUsers = () => {
-    const storedUsers = JSON.parse(localStorage.getItem("users"));
+    const storedUsers = JSON.parse(localStorage.getItem('users'));
     if (storedUsers) {
       setUsers(storedUsers);
     } else {
       axios
-        .get("https://jsonplaceholder.typicode.com/users")
+        .get('https://jsonplaceholder.typicode.com/users')
         .then((response) => {
           setUsers(response.data);
-          localStorage.setItem("users", JSON.stringify(response.data));
+          localStorage.setItem('users', JSON.stringify(response.data));
         })
         .catch((error) => console.error(error));
     }
@@ -29,11 +30,12 @@ function UserList({ refresh }) {
   const handleAddUser = (newUser) => {
     const updatedUsers = [...users, { id: users.length + 1, ...newUser }];
     setUsers(updatedUsers);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
   };
 
   const handleEdit = (user) => {
     setEditingUser(user);
+    setShowModal(true);
   };
 
   const handleUpdate = (updatedUser) => {
@@ -41,25 +43,52 @@ function UserList({ refresh }) {
       user.id === editingUser.id ? { ...user, ...updatedUser } : user
     );
     setUsers(updatedUsers);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
     setEditingUser(null);
   };
 
   const handleDelete = (userId) => {
     const updatedUsers = users.filter((user) => user.id !== userId);
     setUsers(updatedUsers);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
   };
+
+  const handleCancel = () => {
+    setEditingUser(null);
+    setShowModal(false);
+  };
+
+  const filteredUsers = users
+    .filter(
+      (user) =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.id.toString().includes(searchTerm)
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">User List</h1>
-      <UserForm
-        editingUser={editingUser}
-        onSubmit={editingUser ? handleUpdate : handleAddUser}
-        onCancel={() => setEditingUser(null)}
-        initialData={editingUser || {}}
+      <div className="w-full flex justify-between ">
+        <h1 className="text-2xl font-bold mb-4">User List</h1>
+        <div className='flex items-center gap-3 w-[30%]'>
+        <input
+        type="text"
+        placeholder="Search by Name or ID"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full px-4 py-2 border rounded mb-4"
       />
+        <button
+          className="bg-blue-500 text-white px-4 py-2  w-36 rounded mb-4"
+          onClick={() => setShowModal(true)}
+        >
+          Add User
+        </button>
+        </div>
+      
+      </div>
+
+     
       <table className="table-auto w-full border-collapse border border-gray-200">
         <thead>
           <tr>
@@ -71,7 +100,7 @@ function UserList({ refresh }) {
           </tr>
         </thead>
         <tbody>
-          {users.map((user, index) => (
+          {filteredUsers.map((user, index) => (
             <tr key={user.id}>
               <td className="border px-4 py-2 text-center">{index + 1}</td>
               <td className="border px-4 py-2">{user.name}</td>
@@ -95,6 +124,15 @@ function UserList({ refresh }) {
           ))}
         </tbody>
       </table>
+
+      {showModal && (
+        <UserForm
+          editingUser={editingUser}
+          onSubmit={editingUser ? handleUpdate : handleAddUser}
+          onCancel={handleCancel}
+          initialData={editingUser || {}}
+        />
+      )}
     </div>
   );
 }
